@@ -1,18 +1,27 @@
-const express = require('express');
-const bodyParser= require('body-parser');
+const express = require("express");
+const app = express();
+const bodyParser = require("body-parser");
 const multer =require('multer');
-Task = require("./model/schema");
-const mongoose  =  require("mongoose"),
-olxDB = mongoose.model("productSchema");
-const app = express()
+const mongoose =require('mongoose');
+app.use(bodyParser.urlencoded({extended:true}));
 
+mongoose.connect('mongodb://localhost:27017/olxDB',{useNewUrlParser:true,useUnifiedTopology:true});
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended:true}))
-//mongoose.Promise = global.Promise;
-mongoose.connect('mongodb://localhost:27017/olxDB', {​​  useNewUrlParser: true,  useUnifiedTopology: true}​​);
-const db = mongoose.connection;
+const productSchema = new mongoose.Schema({
+    sellerName:String,
+    productName:String,
+    description:String,
+    price:String,
+    email:String,
+    city:String,
+    image:Array,
+    city:String,
+    state:String,
+    contact:String,
+    date:String
+})
 
+const Product = mongoose.model("Product",productSchema); 
 
 var storage=multer.diskStorage({
     destination:function(req,file,cb){
@@ -43,47 +52,43 @@ app.post('/uploadmultiplefile',upload.array('myFiles',12),async(req,res,next) =>
     const state = req.body.State;
     const contact = req.body.Contact;
     const image = [];
+    
     if(!file){
         const error = new Error("Please upload files");
         error.httpStatusCode = 400;
-
         return next(error);
     }
 
     var fs = require('fs')
     var id = req.params.id;
-    for(var i =0;i<file.size;i++){
 
-        fs.rename('./images/'+file[i].originalname,'./images/'+(name+"-"+'.png'),function(err){
-            if(err)throw err;res.send("Renamed")
-            })
+    for(var i =0;i<req.files.length;i++)
+    {
+        fs.rename('./images/'+file[i].originalname,'./images/'+(name+" "+i+'.png'),function(err){
+                if(err)throw err;
+                })
         image.push(name+" "+i+".png");  
-}
-
-    let product = new olxDB({​​
-        name: name,
-        price: price,
-        image: image,
-        description: description,
-        active: active,
-        featured: featured,
-        country: country,
-        city: city,
+    }  
+    const newProduct = new Product({
+        name:name,
+        description:description,
+        price:price,
+        city:city,
+        image:image,
         state:state,
-        contact: contact,
+        contact:contact,
         date: new Date().toLocaleString().split(",")[0],
-    }​​);
-    await product.save();
+    })
 
-    const createSuccess = {​
-        status: "Success",
-        message: "Post created Successfully",
-    }​​
-    res.send(JSON.stringify(createSuccess));
-    console.log(product)
+    await newProduct.save();
 
-//    console.log(req.body);
     
+    const createSuccess = {
+        status: "Success",
+        message:"Post created Succedfully"
+    }
+    res.send(JSON.stringify(createSuccess));
+
 })
 
 app.listen(5000,()=>{

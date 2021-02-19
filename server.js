@@ -18,7 +18,8 @@ const productSchema = new mongoose.Schema({
     city:String,
     state:String,
     contact:String,
-    date:String
+    date:String,
+    createepoch:Number
 })
 
 const Product = mongoose.model("Product",productSchema); 
@@ -38,6 +39,14 @@ var upload = multer({
 
 app.get('/',(req,res)=>{
     res.sendFile(__dirname+ '/index.html')
+})
+app.get('/homepage',async(req,res)=>{
+    const products = await Product.aggregate([{$sort: {createepoch: -1}}, {$limit: 15}])
+    return res.json(products);
+})
+app.get('/getProduct',async(req,res)=>{
+    const products =  await Product.find({'_id':req.query['product_id']});
+    return res.json(products);
 })
 
 app.post('/uploadmultiplefile',upload.array('myFiles',12),async(req,res,next) => {
@@ -78,6 +87,7 @@ app.post('/uploadmultiplefile',upload.array('myFiles',12),async(req,res,next) =>
         state:state,
         contact:contact,
         date: new Date().toLocaleString().split(",")[0],
+        createepoch: Date.now()
     })
 
     await newProduct.save();
@@ -91,6 +101,7 @@ app.post('/uploadmultiplefile',upload.array('myFiles',12),async(req,res,next) =>
 
 })
 
-app.listen(5000,()=>{
+
+app.listen(5001,()=>{
     console.log("Server is running")
 })

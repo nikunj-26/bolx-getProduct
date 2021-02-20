@@ -4,6 +4,10 @@ const bodyParser = require("body-parser");
 const multer =require('multer');
 const mongoose =require('mongoose');
 app.use(bodyParser.urlencoded({extended:true}));
+const cors = require("cors");
+app.use(cors());
+app.use('/images', express.static('images'));
+app.use(bodyParser.json());
 
 mongoose.connect('mongodb://localhost:27017/olxDB',{useNewUrlParser:true,useUnifiedTopology:true});
 
@@ -41,17 +45,18 @@ app.get('/',(req,res)=>{
     res.sendFile(__dirname+ '/index.html')
 })
 app.get('/homepage',async(req,res)=>{
-    const products = await Product.aggregate([{$sort: {createepoch: -1}}, {$limit: 15}])
+    const products = await Product.aggregate([{$sort: {createepoch: -1}}])
     return res.json(products);
 })
-app.get('/getProduct',async(req,res)=>{
-    const products =  await Product.find({'_id':req.query['product_id']});
+app.post('/getProduct',async(req,res)=>{
+    const { product_title } = req.body
+    console.log(await req.body)
+    const products =  await Product.find({'title':product_title});
     return res.json(products);
 })
 
 app.post('/uploadmultiplefile',upload.array('myFiles',12),async(req,res,next) => {
     const file = req.files;
-    const fileName = file.originalname;
     const name= req.body.name;
     //const email= req.body.email;
     //const featured = req.body.featured;

@@ -23,7 +23,8 @@ const productSchema = new mongoose.Schema({
     state:String,
     contact:String,
     date:String,
-    createepoch:Number
+    createepoch:Number,
+    is_approved: Boolean
 })
 
 const Product = mongoose.model("Product",productSchema); 
@@ -45,15 +46,36 @@ app.get('/',(req,res)=>{
     res.sendFile(__dirname+ '/index.html')
 })
 app.get('/homepage',async(req,res)=>{
-    const products = await Product.aggregate([{$sort: {createepoch: -1}}])
+    //return approved products
+    const products = await Product.find({'is_approved' : true})
+    //sort in descending order depending on  
+    products.sort(function(a, b) {
+        return a.createepoch > b.createepoch
+      });
     return res.json(products);
 })
-app.post('/getProduct',async(req,res)=>{
-    const { product_title } = req.body
+
+app.get('/adminhomepage',async(req,res)=>{
+    //return unapproved products
+    const products = await Product.find({'is_approved' : false})
+    return res.json(products);
+})
+
+app.post('/approveProduct',async(req,res)=>{
+    const { product_id } = req.body
     console.log(await req.body)
-    const products =  await Product.find({'title':product_title});
+    await Product.updateOne( { '_id' : product_id },{ is_approved : true });
+    return res.json({status : "success"});
+})
+
+app.get('/getProduct',async(req,res)=>{
+    const { product_id } = req.query
+    console.log(await req.query)
+    const products =  await Product.find({'_id':product_id});
     return res.json(products);
 })
+
+
 
 app.post('/uploadmultiplefile',upload.array('myFiles',12),async(req,res,next) => {
     const file = req.files;
@@ -92,14 +114,15 @@ app.post('/uploadmultiplefile',upload.array('myFiles',12),async(req,res,next) =>
         state:state,
         contact:contact,
         date: new Date().toLocaleString().split(",")[0],
-        createepoch: Date.now()
+        createepoch: Date.now(),
+        is_approved: false
     })
 
     await newProduct.save();
 
     
     const createSuccess = {
-        status: "Success",
+        status: "success",
         message:"Post created Succedfully"
     }
     res.send(JSON.stringify(createSuccess));

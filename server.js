@@ -12,20 +12,20 @@ app.use(bodyParser.json());
 mongoose.connect('mongodb://localhost:27017/olxDB',{useNewUrlParser:true,useUnifiedTopology:true});
 
 const productSchema = new mongoose.Schema({
-    sellerName:String,
-    productName:String,
-    description:String,
-    price:String,
-    email:String,
-    city:String,
-    image:Array,
-    city:String,
-    state:String,
-    contact:String,
-    date:String,
+    sellerName: String,
+    title: String,
+    description: String,
+    price: String,
+    sellerEmail: String,
+    city: String,
+    image: Array,
+    city: String,
+    state: String,
+    phone: String,
+    date: String,
     createepoch:Number,
     is_approved: Boolean
-})
+  });
 
 const Product = mongoose.model("Product",productSchema); 
 
@@ -75,61 +75,86 @@ app.get('/getProduct',async(req,res)=>{
     return res.json(products);
 })
 
+app.get('/searchProduct',async(req,res)=>{
+    const { product_title } = req.query
+    console.log(await req.query)
+    const products =  await Product.find({"title": new RegExp(product_title, 'i')});
+    return res.json(products);
+})
 
-
-app.post('/uploadmultiplefile',upload.array('myFiles',12),async(req,res,next) => {
-    const file = req.files;
-    const name= req.body.name;
-    //const email= req.body.email;
-    //const featured = req.body.featured;
-    const description = req.body.Description;
-    const price = req.body.Price;
-    const city = req.body.City;
-    const state = req.body.State;
-    const contact = req.body.Contact;
-    const image = [];
-    
-    if(!file){
+app.post(
+    "/uploadmultiplefile",
+    upload.array("attachments", 12),
+    async (req, res, next) => {
+      console.log(req.body);
+      // const reqFiles = [];
+      // const url = req.protocol + "://" + req.get("host");
+      // for (var i = 0; i < req.files.length; i++) {
+      //   reqFiles.push(url + "/public/" + req.files[i].filename);
+      // }
+  
+      // console.log(reqFiles);
+  
+      const file = req.files;
+      // const fileName = file.originalname;
+      const sellerName = req.body.sellerName;
+      const title = req.body.title;
+      const sellerEmail= req.body.sellerEmail;
+      //const featured = req.body.featured;
+      const description = req.body.description;
+      const price = req.body.price;
+      const city = req.body.city;
+      const state = req.body.state;
+      const phone = req.body.phone;
+      const image = [];
+  
+      if (!file) {
         const error = new Error("Please upload files");
         error.httpStatusCode = 400;
         return next(error);
-    }
-
-    var fs = require('fs')
-    var id = req.params.id;
-
-    for(var i =0;i<req.files.length;i++)
-    {
-        fs.rename('./images/'+file[i].originalname,'./images/'+(name+" "+i+'.png'),function(err){
-                if(err)throw err;
-                })
-        image.push(name+" "+i+".png");  
-    }  
-    const newProduct = new Product({
-        name:name,
-        description:description,
-        price:price,
-        city:city,
-        image:image,
-        state:state,
-        contact:contact,
+      }
+  
+      var fs = require("fs");
+      var id = req.params.id;
+  
+      for (var i = 0; i < req.files.length; i++) {
+        fs.rename(
+          "./images/" + file[i].originalname,
+          "./images/" + (title + " " + i + ".jpg"),
+          function (err) {
+            if (err) throw err;
+          }
+        );
+        image.push(title + " " + i + ".jpg");
+      }
+  
+      ////////////////DONT see
+      const newProduct = new Product({
+        sellerName: sellerName,
+        sellerEmail: sellerEmail,
+        title: title,
+        description: description,
+        price: price,
+        city: city,
+        image: image,
+        state: state,
+        phone: phone,
         date: new Date().toLocaleString().split(",")[0],
         createepoch: Date.now(),
         is_approved: false
-    })
-
-    await newProduct.save();
-
-    
-    const createSuccess = {
-        status: "success",
-        message:"Post created Succedfully"
+      });
+  
+      await newProduct.save();
+  
+      const createSuccess = {
+        status: "Success",
+        message: "Post created Succedfully",
+      };
+      res.send(JSON.stringify(createSuccess));
     }
-    res.send(JSON.stringify(createSuccess));
-
-})
+  );
 
 
-app.listen(5001,()=>{
+app.listen(5002,()=>{
     console.log("Server is running")
 })

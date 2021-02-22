@@ -92,7 +92,7 @@ app.post('/addComment',async(req,res)=>{
           if (!err) {
               const createSuccess = {
                   status: "Success",
-                  message:"Post created Succedfully"
+                  message:"Post created Successfully"
               }
               res.send(JSON.stringify(createSuccess));
           } else {
@@ -103,7 +103,7 @@ app.post('/addComment',async(req,res)=>{
               res.send(JSON.stringify(createFailure));
           }
       }
-  );
+  )
 })
 
 app.post("/getUserPosts", async (req, res) => {
@@ -188,7 +188,7 @@ app.post(
 
     const createSuccess = {
       status: "Success",
-      message: "Post created Succedfully",
+      message: "Post created Successfully",
     };
     res.send(JSON.stringify(createSuccess));
   }

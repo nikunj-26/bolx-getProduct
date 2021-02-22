@@ -26,6 +26,7 @@ const productSchema = new mongoose.Schema({
   state: String,
   phone: String,
   date: String,
+  comment:Array,
   createepoch: Number,
   is_approved: Boolean,
 });
@@ -71,12 +72,39 @@ app.post("/approveProduct", async (req, res) => {
   return res.json({ status: "success" });
 });
 
-app.get("/getProduct", async (req, res) => {
-  const { product_id } = req.query;
-  console.log(await req.query);
-  const products = await Product.find({ _id: product_id });
+app.post("/getProduct", async (req, res) => {
+  const products =  await Product.findOne({_id: req.body.productID});
+  //console.log("products:"+products)
   return res.json(products);
 });
+
+app.post('/addComment',async(req,res)=>{
+  const cdata = {
+      commentBy: req.body.commentBy,
+      commentBody: req.body.commentBody,
+  };
+  console.log(cdata);
+
+  Product.findOneAndUpdate(
+      { _id: req.body.id },
+      { $push: { comment: cdata } },
+      function(err) {
+          if (!err) {
+              const createSuccess = {
+                  status: "Success",
+                  message:"Post created Succedfully"
+              }
+              res.send(JSON.stringify(createSuccess));
+          } else {
+              const createFailure = {
+                  status: "error",
+                  message:"Some error occured"
+              }
+              res.send(JSON.stringify(createFailure));
+          }
+      }
+  );
+})
 
 app.post("/getUserPosts", async (req, res) => {
   const { sellerEmail } = req.body;
